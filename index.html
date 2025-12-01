@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام تسجيل العملاء المتقدم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics-compat.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .stat-box {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .product-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 250px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+        }
+        
+        .product-title {
+            font-size: 20px;
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+        
+        .product-description {
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        button {
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .auth-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0f8ff;
+            border-radius: 10px;
+            border: 1px solid #3498db;
+        }
+        
+        .toggle-password {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        
+        .password-field {
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .admin-panel {
+            display: none;
+            margin-top: 40px;
+            padding: 25px;
+            background: #f0f8ff;
+            border-radius: 10px;
+            border: 1px solid #3498db;
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .panel-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .panel-btn {
+            width: auto;
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tr:hover {
+            background-color: #e8f4fc;
+        }
+        
+        .message {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+            font-weight: 600;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .state-stats {
+            margin-top: 30px;
+        }
+        
+        .state-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .state-name {
+            font-weight: 600;
+        }
+        
+        .state-count {
+            background: #3498db;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .export-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid #3498db;
+            color: #3498db;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #2ecc71;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            max-width: 350px;
+        }
+        
+        .notification.error {
+            background: #e74c3c;
+        }
+        
+        .whatsapp-btn {
+            background: linear-gradient(to right, #25D366, #128C7E);
+        }
+        
+        .excel-btn {
+            background: linear-gradient(to right, #217346, #1d6f42);
+        }
+        
+        .stats-btn {
+            background: linear-gradient(to right, #9b59b6, #8e44ad);
+        }
+        
+        .firebase-status {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .status-connected {
+            color: #2ecc71;
+        }
+        
+        .status-disconnected {
+            color: #e74c3c;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    <div class="firebase-status" id="firebaseStatus">
+        <i class="fas fa-circle" id="statusIcon"></i>
+        <span id="statusText">جاري الاتصال...</span>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-users"></i> نظام تسجيل العملاء المتقدم</h1>
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-number" id="totalCustomers">0</div>
+                    <div class="stat-label">إجمالي العملاء</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="todayCustomers">0</div>
+                    <div class="stat-label">عملاء اليوم</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>جاري تحميل البيانات...</p>
+        </div>
+        
+        <div class="content" id="mainContent" style="display: none;">
+            <div class="product-section">
+                <img src="https://images.unsplash.com/photo-1556656793-08538906a9f8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" alt="صورة المنتج" class="product-image">
+                <h2 class="product-title">منتج رائع بخصم حصري</h2>
+                <p class="product-description">
+                    هذا المنتج الرائع يتميز بجودة عالية وتصميم أنيق. احصل عليه الآن بخصم حصري لمدة محدودة. سارع بالتسجيل لضمان حصولك على أفضل العروض.
+                </p>
+                <div class="stats-section">
+                    <div class="stat-box">
+                        <div class="stat-number">58</div>
+                        <div class="stat-label">الولايات المستهدفة</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">دعم متواصل</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2><i class="fas fa-user-plus"></i> تسجيل المعلومات</h2>
+                <form id="customerForm">
+                    <div class="form-group">
+                        <label for="firstName"><i class="fas fa-signature"></i> الاسم:</label>
+                        <input type="text" id="firstName" required placeholder="أدخل اسمك">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lastName"><i class="fas fa-user"></i> اللقب:</label>
+                        <input type="text" id="lastName" required placeholder="أدخل لقبك">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone"><i class="fas fa-phone"></i> رقم الهاتف:</label>
+                        <input type="tel" id="phone" required placeholder="أدخل رقم هاتفك">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="state"><i class="fas fa-map-marker-alt"></i> الولاية:</label>
+                        <select id="state" required>
+                            <option value="">اختر الولاية</option>
+                            <!-- سيتم إضافة الولايات الجزائرية عبر JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <button type="submit" id="submitBtn"><i class="fas fa-save"></i> تسجيل المعلومات</button>
+                </form>
+                
+                <div class="auth-section">
+                    <div class="toggle-password" id="togglePassword">
+                        <i class="fas fa-lock"></i>
+                        <span>إظهار لوحة التحكم</span>
+                    </div>
+                    
+                    <div class="password-field" id="passwordField">
+                        <label for="password"><i class="fas fa-key"></i> كلمة المرور:</label>
+                        <input type="password" id="password" placeholder="أدخل كلمة المرور">
+                        <button id="authButton"><i class="fas fa-sign-in-alt"></i> الدخول إلى لوحة التحكم</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="admin-panel" id="adminPanel">
+            <div class="panel-header">
+                <h2><i class="fas fa-tachometer-alt"></i> لوحة التحكم - العملاء المسجلين</h2>
+                <div class="panel-actions">
+                    <button class="panel-btn excel-btn" id="exportExcel"><i class="fas fa-file-excel"></i> تصدير لإكسل</button>
+                    <button class="panel-btn stats-btn" id="showStats"><i class="fas fa-chart-bar"></i> الإحصائيات</button>
+                    <button class="panel-btn" id="refreshData"><i class="fas fa-sync-alt"></i> تحديث</button>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="customers">قاعدة العملاء</div>
+                <div class="tab" data-tab="statistics">الإحصائيات</div>
+                <div class="tab" data-tab="export">تصدير البيانات</div>
+            </div>
+            
+            <div class="tab-content active" id="customersTab">
+                <div id="customersTable"></div>
+            </div>
+            
+            <div class="tab-content" id="statisticsTab">
+                <h3><i class="fas fa-chart-pie"></i> إحصائيات العملاء حسب الولايات</h3>
+                <div id="stateStats" class="state-stats"></div>
+                
+                <h3 style="margin-top: 30px;"><i class="fas fa-calendar-alt"></i> إحصائيات التسجيل حسب التاريخ</h3>
+                <div id="dateStats" class="state-stats"></div>
+            </div>
+            
+            <div class="tab-content" id="exportTab">
+                <div class="export-section">
+                    <h3><i class="fas fa-download"></i> تصدير بيانات العملاء</h3>
+                    <p>يمكنك تصدير بيانات العملاء إلى ملف Excel لمزيد من التحليل أو المشاركة مع فريقك.</p>
+                    
+                    <div style="margin-top: 20px;">
+                        <button class="panel-btn excel-btn" id="exportAllData"><i class="fas fa-file-excel"></i> تصدير جميع البيانات</button>
+                        <button class="panel-btn" id="exportTodayData"><i class="fas fa-file-excel"></i> تصدير بيانات اليوم</button>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h4>إرسال رسالة جماعية عبر واتساب</h4>
+                        <textarea id="whatsappMessage" rows="4" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px;" placeholder="أدخل نص الرسالة الجماعية..."></textarea>
+                        <button class="panel-btn whatsapp-btn" id="sendWhatsApp"><i class="fab fa-whatsapp"></i> إرسال رسالة جماعية</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        // ========== إعدادات Firebase ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkG6aRRFC5rNEIvvEYGjDzhdyhAXXKkXY",
+            authDomain: "ecommerce-d5563.firebaseapp.com",
+            projectId: "ecommerce-d5563",
+            storageBucket: "ecommerce-d5563.firebasestorage.app",
+            messagingSenderId: "876902025382",
+            appId: "1:876902025382:web:9811649005fccb5da58c67",
+            measurementId: "G-3CX7PC1STP"
+        };
+        
+        // ========== تهيئة Firebase ==========
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Initialize Firestore
+        const db = firebase.firestore();
+        
+        // Initialize Analytics
+        const analytics = firebase.analytics();
+        
+        // ========== متغيرات عامة ==========
+        let firebaseConnected = false;
+        let customers = [];
+        
+        // قائمة الولايات الجزائرية
+        const algerianStates = [
+            "أدرار", "الشلف", "الأغواط", "أم البواقي", "باتنة", "بجاية", "بسكرة", "بشار", "البليدة", 
+            "البويرة", "تمنراست", "تبسة", "تلمسان", "تيارت", "تيزي وزو", "الجزائر", "الجلفة", "جيجل", 
+            "سطيف", "سعيدة", "سكيكدة", "سيدي بلعباس", "عنابة", "قالمة", "قسنطينة", "المدية", "مستغانم", 
+            "المسيلة", "معسكر", "ورقلة", "وهران", "البيض", "إليزي", "برج بوعريريج", "بومرداس", "الطارف", 
+            "تندوف", "تيسمسيلت", "الوادي", "خنشلة", "سوق أهراس", "تيبازة", "ميلة", "عين الدفلى", "النعامة", 
+            "عين تموشنت", "غرداية", "غليزان", "تيميمون", "برج باجي مختار", "أولاد جلال", "بني عباس", 
+            "عين صالح", "عين قزام", "تقرت", "جانت", "المغير", "المنيعة"
+        ];
+        
+        // ========== تهيئة التطبيق ==========
+        document.addEventListener('DOMContentLoaded', async function() {
+            // تعبئة قائمة الولايات
+            const stateSelect = document.getElementById('state');
+            algerianStates.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                stateSelect.appendChild(option);
+            });
+            
+            // اختبار اتصال Firebase
+            await testFirebaseConnection();
+            
+            // تحميل البيانات من Firestore
+            await loadCustomersFromFirestore();
+            
+            // تحديث الإحصائيات
+            updateStats();
+            
+            // إظهار المحتوى الرئيسي
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'grid';
+            
+            // ========== إعداد المستمعين للأحداث ==========
+            
+            // إظهار/إخفاء حقل كلمة المرور
+            document.getElementById('togglePassword').addEventListener('click', function() {
+                const passwordField = document.getElementById('passwordField');
+                if (passwordField.style.display === 'block') {
+                    passwordField.style.display = 'none';
+                    this.querySelector('span').textContent = 'إظهار لوحة التحكم';
+                    this.querySelector('i').className = 'fas fa-lock';
+                } else {
+                    passwordField.style.display = 'block';
+                    this.querySelector('span').textContent = 'إخفاء لوحة التحكم';
+                    this.querySelector('i').className = 'fas fa-lock-open';
+                }
+            });
+            
+            // التحقق من كلمة المرور
+            document.getElementById('authButton').addEventListener('click', function() {
+                const password = document.getElementById('password').value;
+                if (password === 'ghedir38') {
+                    document.getElementById('adminPanel').style.display = 'block';
+                    showMessage('تم التحقق بنجاح!', 'success');
+                    displayCustomers();
+                    updateStats();
+                    showNotification('تم الدخول إلى لوحة التحكم بنجاح');
+                } else {
+                    showMessage('كلمة المرور غير صحيحة!', 'error');
+                    showNotification('كلمة المرور غير صحيحة!', 'error');
+                }
+            });
+            
+            // معالجة نموذج التسجيل
+            document.getElementById('customerForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                if (!firebaseConnected) {
+                    showMessage('لا يوجد اتصال بقاعدة البيانات. الرجاء المحاولة لاحقاً.', 'error');
+                    showNotification('لا يوجد اتصال بقاعدة البيانات', 'error');
+                    return;
+                }
+                
+                const firstName = document.getElementById('firstName').value;
+                const lastName = document.getElementById('lastName').value;
+                const phone = document.getElementById('phone').value;
+                const state = document.getElementById('state').value;
+                
+                // التحقق من رقم الهاتف
+                if (!isValidPhoneNumber(phone)) {
+                    showMessage('رقم الهاتف غير صالح!', 'error');
+                    return;
+                }
+                
+                // الحصول على الوقت الحالي
+                const now = new Date();
+                const registrationTime = now.toLocaleString('ar-EG');
+                const registrationDate = now.toISOString().split('T')[0];
+                const timestamp = firebase.firestore.Timestamp.fromDate(now);
+                
+                // تعطيل زر الإرسال
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التسجيل...';
+                
+                try {
+                    // حفظ البيانات في Firestore
+                    const docRef = await db.collection('customers').add({
+                        firstName,
+                        lastName,
+                        phone,
+                        state,
+                        registrationTime,
+                        registrationDate,
+                        timestamp,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // تحديث البيانات المحلية
+                    const customer = {
+                        id: docRef.id,
+                        firstName,
+                        lastName,
+                        phone,
+                        state,
+                        registrationTime,
+                        registrationDate
+                    };
+                    
+                    customers.push(customer);
+                    
+                    showMessage('تم تسجيل معلوماتك بنجاح!', 'success');
+                    showNotification('تم تسجيل عميل جديد: ' + firstName + ' ' + lastName);
+                    
+                    // تسجيل الحدث في Analytics
+                    analytics.logEvent('customer_registered', {
+                        customer_name: firstName + ' ' + lastName,
+                        state: state
+                    });
+                    
+                    // إعادة تعيين النموذج
+                    this.reset();
+                    
+                    // تحديث الإحصائيات
+                    updateStats();
+                    
+                    // إذا كانت لوحة التحكم مفتوحة، قم بتحديث البيانات
+                    if (document.getElementById('adminPanel').style.display === 'block') {
+                        displayCustomers();
+                        updateStats();
+                    }
+                    
+                } catch (error) {
+                    console.error('خطأ في حفظ البيانات:', error);
+                    showMessage('حدث خطأ في حفظ البيانات. الرجاء المحاولة مرة أخرى.', 'error');
+                    showNotification('خطأ في حفظ البيانات', 'error');
+                } finally {
+                    // إعادة تمكين زر الإرسال
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> تسجيل المعلومات';
+                }
+            });
+            
+            // تصدير البيانات لإكسل
+            document.getElementById('exportExcel').addEventListener('click', exportToExcel);
+            document.getElementById('exportAllData').addEventListener('click', exportToExcel);
+            
+            document.getElementById('exportTodayData').addEventListener('click', function() {
+                exportToExcel(true);
+            });
+            
+            // إظهار الإحصائيات
+            document.getElementById('showStats').addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                document.querySelector('[data-tab="statistics"]').classList.add('active');
+                document.getElementById('statisticsTab').classList.add('active');
+                
+                displayStats();
+            });
+            
+            // تحديث البيانات
+            document.getElementById('refreshData').addEventListener('click', async function() {
+                await loadCustomersFromFirestore();
+                displayCustomers();
+                updateStats();
+                showNotification('تم تحديث البيانات بنجاح');
+            });
+            
+            // إرسال رسالة واتساب جماعية
+            document.getElementById('sendWhatsApp').addEventListener('click', sendBulkWhatsApp);
+            
+            // إدارة التبويبات
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    document.querySelectorAll('.tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    document.querySelectorAll('.tab-content').forEach(c => {
+                        c.classList.remove('active');
+                    });
+                    
+                    this.classList.add('active');
+                    document.getElementById(tabId + 'Tab').classList.add('active');
+                    
+                    if (tabId === 'statistics') {
+                        displayStats();
+                    }
+                });
+            });
+        });
+        
+        // ========== دوال Firebase ==========
+        
+        // اختبار اتصال Firebase
+        async function testFirebaseConnection() {
+            try {
+                const statusElement = document.getElementById('firebaseStatus');
+                const statusIcon = document.getElementById('statusIcon');
+                const statusText = document.getElementById('statusText');
+                
+                // محاولة قراءة من Firestore
+                const testDoc = await db.collection('test').limit(1).get();
+                
+                firebaseConnected = true;
+                statusIcon.className = 'fas fa-circle status-connected';
+                statusText.textContent = 'متصل بـ Firebase';
+                statusText.style.color = '#2ecc71';
+                
+                showNotification('تم الاتصال بقاعدة البيانات بنجاح', 'success');
+                console.log('✅ Firebase connection successful');
+                
+            } catch (error) {
+                console.error('❌ Firebase connection error:', error);
+                
+                const statusElement = document.getElementById('firebaseStatus');
+                const statusIcon = document.getElementById('statusIcon');
+                const statusText = document.getElementById('statusText');
+                
+                firebaseConnected = false;
+                statusIcon.className = 'fas fa-circle status-disconnected';
+                statusText.textContent = 'غير متصل بـ Firebase';
+                statusText.style.color = '#e74c3c';
+                
+                showNotification('لا يوجد اتصال بقاعدة البيانات', 'error');
+            }
+        }
+        
+        // تحميل العملاء من Firestore
+        async function loadCustomersFromFirestore() {
+            try {
+                const querySnapshot = await db.collection('customers').orderBy('timestamp', 'desc').get();
+                customers = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    customers.push({
+                        id: doc.id,
+                        ...data
+                    });
+                });
+                
+                console.log(`✅ تم تحميل ${customers.length} عميل من Firestore`);
+                return true;
+                
+            } catch (error) {
+                console.error('❌ خطأ في تحميل البيانات من Firestore:', error);
+                
+                // محاولة استخدام البيانات المحلية كنسخة احتياطية
+                const localData = localStorage.getItem('customers_backup');
+                if (localData) {
+                    customers = JSON.parse(localData);
+                    showNotification('جارٍ استخدام البيانات المحلية (نسخة احتياطية)', 'info');
+                }
+                
+                return false;
+            }
+        }
+        
+        // حفظ حالة التطبيق (نسخة احتياطية محلية)
+        function saveAppState() {
+            try {
+                localStorage.setItem('customers_backup', JSON.stringify(customers));
+                localStorage.setItem('last_sync', new Date().toISOString());
+                console.log('✅ تم حفظ النسخة الاحتياطية محلياً');
+            } catch (error) {
+                console.error('❌ خطأ في حفظ النسخة الاحتياطية:', error);
+            }
+        }
+        
+        // تحميل حالة التطبيق (نسخة احتياطية محلية)
+        function loadAppState() {
+            try {
+                const savedData = localStorage.getItem('customers_backup');
+                if (savedData) {
+                    customers = JSON.parse(savedData);
+                    console.log('✅ تم تحميل النسخة الاحتياطية محلياً');
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('❌ خطأ في تحميل النسخة الاحتياطية:', error);
+                return false;
+            }
+        }
+        
+        // ========== دوال المساعدة ==========
+        
+        // التحقق من صحة رقم الهاتف
+        function isValidPhoneNumber(phone) {
+            // نموذج بسيط لرقم هاتف جزائري
+            const phoneRegex = /^(05|06|07)\d{8}$/;
+            return phoneRegex.test(phone.replace(/\s+/g, ''));
+        }
+        
+        // تحديث الإحصائيات
+        function updateStats() {
+            const today = new Date().toISOString().split('T')[0];
+            
+            const todayCustomers = customers.filter(c => c.registrationDate === today).length;
+            
+            document.getElementById('totalCustomers').textContent = customers.length;
+            document.getElementById('todayCustomers').textContent = todayCustomers;
+            
+            // حفظ نسخة احتياطية محلية
+            saveAppState();
+        }
+        
+        // عرض رسالة للمستخدم
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 4000);
+        }
+        
+        // عرض إشعار
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // عرض العملاء المسجلين
+        function displayCustomers() {
+            const tableContainer = document.getElementById('customersTable');
+            
+            if (customers.length === 0) {
+                tableContainer.innerHTML = '<p>لا توجد بيانات مسجلة بعد.</p>';
+                return;
+            }
+            
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الاسم</th>
+                            <th>اللقب</th>
+                            <th>رقم الهاتف</th>
+                            <th>الولاية</th>
+                            <th>وقت التسجيل</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            customers.forEach((customer, index) => {
+                tableHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${customer.firstName}</td>
+                        <td>${customer.lastName}</td>
+                        <td>${customer.phone}</td>
+                        <td>${customer.state}</td>
+                        <td>${customer.registrationTime}</td>
+                        <td>
+                            <button onclick="contactCustomer('${customer.phone}')" style="padding: 5px 10px; background: #25D366; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 5px;">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                            <button onclick="deleteCustomer('${customer.id}', '${customer.firstName}')" style="padding: 5px 10px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            tableContainer.innerHTML = tableHTML;
+        }
+        
+        // حذف عميل
+        async function deleteCustomer(id, name) {
+            if (!confirm(`هل أنت متأكد من حذف العميل ${name}؟`)) {
+                return;
+            }
+            
+            try {
+                await db.collection('customers').doc(id).delete();
+                
+                // تحديث البيانات المحلية
+                customers = customers.filter(c => c.id !== id);
+                
+                // تحديث العرض
+                displayCustomers();
+                updateStats();
+                
+                showNotification(`تم حذف العميل ${name} بنجاح`);
+                
+            } catch (error) {
+                console.error('خطأ في حذف العميل:', error);
+                showNotification('خطأ في حذف العميل', 'error');
+            }
+        }
+        
+        // عرض الإحصائيات
+        function displayStats() {
+            const stateStatsContainer = document.getElementById('stateStats');
+            const dateStatsContainer = document.getElementById('dateStats');
+            
+            // إحصائيات الولايات
+            const stateStats = {};
+            customers.forEach(customer => {
+                if (stateStats[customer.state]) {
+                    stateStats[customer.state]++;
+                } else {
+                    stateStats[customer.state] = 1;
+                }
+            });
+            
+            let stateStatsHTML = '';
+            Object.keys(stateStats)
+                .sort((a, b) => stateStats[b] - stateStats[a])
+                .forEach(state => {
+                    stateStatsHTML += `
+                        <div class="state-item">
+                            <span class="state-name">${state}</span>
+                            <span class="state-count">${stateStats[state]}</span>
+                        </div>
+                    `;
+                });
+            
+            stateStatsContainer.innerHTML = stateStatsHTML || '<p>لا توجد بيانات إحصائية بعد.</p>';
+            
+            // إحصائيات التواريخ
+            const dateStats = {};
+            customers.forEach(customer => {
+                if (dateStats[customer.registrationDate]) {
+                    dateStats[customer.registrationDate]++;
+                } else {
+                    dateStats[customer.registrationDate] = 1;
+                }
+            });
+            
+            let dateStatsHTML = '';
+            Object.keys(dateStats)
+                .sort((a, b) => new Date(b) - new Date(a))
+                .forEach(date => {
+                    const formattedDate = new Date(date).toLocaleDateString('ar-EG');
+                    dateStatsHTML += `
+                        <div class="state-item">
+                            <span class="state-name">${formattedDate}</span>
+                            <span class="state-count">${dateStats[date]}</span>
+                        </div>
+                    `;
+                });
+            
+            dateStatsContainer.innerHTML = dateStatsHTML || '<p>لا توجد بيانات إحصائية بعد.</p>';
+        }
+        
+        // تصدير البيانات لإكسل
+        function exportToExcel(todayOnly = false) {
+            let dataToExport = customers;
+            
+            if (todayOnly) {
+                const today = new Date().toISOString().split('T')[0];
+                dataToExport = customers.filter(c => c.registrationDate === today);
+            }
+            
+            if (dataToExport.length === 0) {
+                showNotification('لا توجد بيانات للتصدير', 'error');
+                return;
+            }
+            
+            let csvContent = "الاسم,اللقب,رقم الهاتف,الولاية,وقت التسجيل\n";
+            
+            dataToExport.forEach(customer => {
+                csvContent += `"${customer.firstName}","${customer.lastName}","${customer.phone}","${customer.state}","${customer.registrationTime}"\n`;
+            });
+            
+            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `عملاء_${todayOnly ? 'اليوم' : 'الكل'}_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification(`تم تصدير ${dataToExport.length} عميل بنجاح`);
+        }
+        
+        // إرسال رسالة واتساب جماعية
+        function sendBulkWhatsApp() {
+            const message = document.getElementById('whatsappMessage').value;
+            if (!message) {
+                showNotification('يرجى كتابة نص الرسالة', 'error');
+                return;
+            }
+            
+            if (customers.length === 0) {
+                showNotification('لا توجد بيانات عملاء', 'error');
+                return;
+            }
+            
+            // فتح واتساب للعميل الأول كمثال
+            const firstCustomer = customers[0];
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${firstCustomer.phone}?text=${encodedMessage}`;
+            window.open(whatsappUrl, '_blank');
+            
+            showNotification('تم فتح واتساب، يمكنك إرسال الرسالة يدوياً للعملاء');
+        }
+        
+        // الاتصال بالعميل عبر واتساب
+        function contactCustomer(phone) {
+            const message = "مرحباً، شكراً لاهتمامك بمنتجاتنا. كيف يمكنني مساعدتك؟";
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+            window.open(whatsappUrl, '_blank');
+        }
+    </script>
+</body>
+</html>
